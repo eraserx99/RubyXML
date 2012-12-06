@@ -8,7 +8,7 @@ class PatentsXMLParser
   # SGML2.4 and XML2.5 format. 
   # It is not necessary to use the group (.*?) here, but it might be convenient for the future.
   PATENT_REGX = Regexp.new(/<PATDOC.*?>(.*?)<\/PATDOC.*?>/imu)
-  
+    
   # The PATENT_KIND_REGX is used to exclude the patents we are not interested.
   # Based on the explanation of RECOMMENDATED STANDARD CODE FOR THE IDENTIFICATION OF
   # DIFFERENT KINDS OF PATENT DOCUMENTS STANDARD ST. 16.
