@@ -20,3 +20,7 @@ doc/
 
 # Ignore all gems
 vendor/bundle
+
+# Others
+.project
+
