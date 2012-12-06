@@ -9,7 +9,7 @@ class PatentsXMLParser
   # It is not necessary to use the group (.*?) here, but it might be convenient for the future.
   PATENT_REGX = Regexp.new(/<PATDOC.*?>(.*?)<\/PATDOC.*?>/imu)
     
-  # The PATENT_KIND_REGX is used to exclude the patents we are not interested.
+  # The PATENT_KIND_REGX is used to include the patents we are not interested.
   # Based on the explanation of RECOMMENDATED STANDARD CODE FOR THE IDENTIFICATION OF
   # DIFFERENT KINDS OF PATENT DOCUMENTS STANDARD ST. 16.
   # The KIND code is presented in the format ONE LETTER CODE and ONE DIGIT CODE.
