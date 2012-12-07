@@ -9,7 +9,7 @@ class PatentsXMLParser
   # It is not necessary to use the group (.*?) here, but it might be convenient for the future.
   PATENT_REGX = Regexp.new(/<PATDOC.*?>(.*?)<\/PATDOC.*?>/imu)
     
-  # The PATENT_KIND_REGX is used to include the patents we are not interested.
+  # The PATENT_KIND_REGX is used to include the patents we are interested.
   # Based on the explanation of RECOMMENDATED STANDARD CODE FOR THE IDENTIFICATION OF
   # DIFFERENT KINDS OF PATENT DOCUMENTS STANDARD ST. 16.
   # The KIND code is presented in the format ONE LETTER CODE and ONE DIGIT CODE.
@@ -52,18 +52,18 @@ class PatentsXMLParser
   end
   private :extract_inner_text
   
+  def doc_id
+    
+  end
+  
   def doc_type
-    :patent
+    :us_patent_grant
   end
   
-  def sourc_type
-    :uspto_pat_xml
-  end
-  
+  # :uspto_xml_v4, , :uspto_xml_v2, :uspto_xml_v1, or :uspto_sgml_v2
   # TODO: further review needed
-  def patent_type
-    kind = pub_kind
-    kind =~ PatentsXMLParser::PATENT_KIND_REGX ? :utility : :other
+  def source_version
+    :uspto_xml_v2
   end
   
   # The member functions below help to extract information from the patent
@@ -71,27 +71,40 @@ class PatentsXMLParser
   # If the patent is constructed as Nokogiri::XML object, all the element names are kept as the original inputs.
   
   # B110 - number of document
-  def pub_num
+  def doc_num
     node = @doc.at_xpath("//b110")
     extract_inner_text(node)
   end
     
   # B130 - kind of document
-  def pub_kind
+  def kind
     node = @doc.at_xpath("//b130")
     extract_inner_text(node)
   end
+  
+  # TODO: further review needed
+  def patent_type
+    kind = kind
+    kind =~ PatentsXMLParser::PATENT_KIND_REGX ? :utility : :other
+  end 
   
   # B140 - date of publication
   def pub_date
     node = @doc.at_xpath("//b140")
     extract_inner_text(node)
   end
-
+  
   # B190 - publishing country or organization
-  def pub_country_or_organization
+  # TODO: further review needed
+  def country
     node = @doc.at_xpath("//b190")
     extract_inner_text(node)
+  end
+  
+  # B210 - application number
+  def app_num
+    node = @doc.at_xpath("//b210")
+    extract_inner_text(node) 
   end
   
   # B220 - application filing date  
@@ -113,22 +126,18 @@ class PatentsXMLParser
     classes
   end
   
+  def classifications
+    
+  end
+  
+  def references
+    
+  end
+  
   # B540 - title
   def title
     node = @doc.at_xpath("//b540")
     extract_inner_text(node)
-  end
-  
-  # B210 - application number
-  def app_num
-    node = @doc.at_xpath("//b210")
-    extract_inner_text(node) 
-  end
-  
-  # B220 - application filing date
-  def app_filing_date
-    node = @doc.at_xpath("//b220")
-    extract_inner_text(node)     
   end
   
   # B720 - inventor information
@@ -192,8 +201,13 @@ class PatentsXMLParser
     
     assigs
   end
-
- # SDOAB - abstract
+  
+  # TODO: 
+  def grant_info
+    
+  end
+  
+  # SDOAB - abstract
   def abstract
     node = @doc.at_xpath("//sdoab")
     extract_inner_text(node)         
@@ -204,6 +218,34 @@ class PatentsXMLParser
     node = @doc.at_xpath("//sdocl")
     extract_inner_text(node)          
   end  
+  
+  # Calculate the number of claims of the patent.
+  def num_claims
+    nclms = 0
+    node = @doc.at_xpath("//sdocl")
+    
+    # More than one claim per patent
+    # <SDOCL>
+    #   <CL>
+    #     <CLM ID="..."></CLM>
+    #     <CLM ID="..."></CLM>
+    #     ...
+    #   <CL>
+    # </SDOCL>
+    if node
+      if clms = node.xpath(".//clm")
+        nclms = clms.size
+      end
+    end
+    
+    nclms
+  end
+  
+  # There is no exemplary claim stored in patent files based on SGML2.4 and XML2.5.
+  # Return 1 for now.
+  def exem_claim
+    1
+  end
     
   # SDOD - description  
   def description
