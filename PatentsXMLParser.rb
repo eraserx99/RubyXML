@@ -215,8 +215,22 @@ class PatentsXMLParser
   
   # SDOCL - claims
   def claims
+    clms = []
+    
     node = @doc.at_xpath("//sdocl")
-    extract_inner_text(node)          
+    if node
+      node.xpath(".//clm").each do |clm|
+        m = Hash.new
+        
+        number = clm['id']
+        text = extract_inner_text(clm)
+        m.store("number", number) unless number == nil
+        m.store("text", text) unless text == nil 
+        clms << m
+      end
+    end
+    
+    clms
   end  
   
   # Calculate the number of claims of the patent.
