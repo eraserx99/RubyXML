@@ -17,7 +17,7 @@ files.each do |file|
     p p.abstract
     p p.claims
     p "number of claims => " + p.num_claims.to_s
-    p p.inventors.to_s
+    p p.applicants.to_s
     p p.assignee.to_s
     p p.description
     count = count + 1

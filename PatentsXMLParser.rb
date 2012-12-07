@@ -144,31 +144,31 @@ class PatentsXMLParser
   # B721 - name & address
   # This function returns the inventor information as an array of hashes.
   # [ [ 'first_name' => '...', 'last_name' => '...', ]]
-  def inventors
-    ivs = []
+  def applicants
+    appls = []
     
     if b720 = @doc.at_xpath("//b720") 
       b721 = b720.xpath(".//b721")
       # Iterate through the elements
-      b721.each do |inventor|
-        iv = Hash.new
+      b721.each do |appl|
+        ap = Hash.new
         
         # Look for elements (such as fnm, snm, etc) relative to the current element (inventor)
-        first_name = inventor.at_xpath(".//fnm")
-        last_name = inventor.at_xpath(".//snm")
-        organization = inventor.at_xpath("..//onm")
-        city = inventor.at_xpath(".//city")
-        country = inventor.at_xpath(".//ctry")
-        iv.store(:first_name, extract_inner_text(first_name)) unless first_name == nil
-        iv.store(:last_name, extract_inner_text(last_name)) unless last_name == nil
-        iv.store(:organization, extract_inner_text(organization)) unless organization == nil
-        iv.store(:city, extract_inner_text(city)) unless city == nil
-        iv.store(:country, extract_inner_text(country)) unless country == nil
-        ivs << iv
+        first_name = appl.at_xpath(".//fnm")
+        last_name = appl.at_xpath(".//snm")
+        organization = appl.at_xpath("..//onm")
+        city = appl.at_xpath(".//city")
+        country = appl.at_xpath(".//ctry")
+        ap.store(:first_name, extract_inner_text(first_name)) unless first_name == nil
+        ap.store(:last_name, extract_inner_text(last_name)) unless last_name == nil
+        ap.store(:organization, extract_inner_text(organization)) unless organization == nil
+        ap.store(:city, extract_inner_text(city)) unless city == nil
+        ap.store(:country, extract_inner_text(country)) unless country == nil
+        appls << ap 
       end
     end
     
-    ivs
+    appls 
   end
 
   # B730 - assignee information
@@ -190,9 +190,10 @@ class PatentsXMLParser
         organization = assignee.at_xpath("..//onm")
         city = assignee.at_xpath(".//city")
         country = assignee.at_xpath(".//ctry")
+        assig.store(:type, :assignee)
         assig.store(:first_name, extract_inner_text(first_name)) unless first_name == nil
         assig.store(:last_name, extract_inner_text(last_name)) unless last_name == nil
-        assig.store(:organization, extract_inner_text(organization)) unless organization == nil
+        assig.store(:org_name, extract_inner_text(organization)) unless organization == nil
         assig.store(:city, extract_inner_text(city)) unless city == nil
         assig.store(:country, extract_inner_text(country)) unless country == nil
         assigs << assig
@@ -219,10 +220,22 @@ class PatentsXMLParser
     
     node = @doc.at_xpath("//sdocl")
     if node
+      # Search and loop through all CLM elements
+      # <SDOCL>
+      #   <CL>
+      #     <CLM ID="..."></CLM>
+      #     <CLM ID="..."></CLM>
+      #     ...
+      #   <CL>
+      # </SDOCL> 
+      # , then parse the CLM / claim element
       node.xpath(".//clm").each do |clm|
         m = Hash.new
-        
+
+        # The ID attribute of CLM element represents the claim number.
+        # The format of the ID attribute is CLM-ddddd.        
         number = clm['id']
+        number = number.scan(/\d+/)[0].to_i unless number == nil
         text = extract_inner_text(clm)
         m.store("number", number) unless number == nil
         m.store("text", text) unless text == nil 
