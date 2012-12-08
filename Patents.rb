@@ -24,6 +24,7 @@ files.each do |file|
     p "agents => " + p.agents.to_s
     p "examiners => " + p.examiners.to_s
     p "description => " + p.description
+    p "grant info => " + p.grant_info.to_s
     count = count + 1
   end
 end

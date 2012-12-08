@@ -205,9 +205,8 @@ class PatentsXMLParser
   # TODO: further review required; Each of the patents might have i
   # both international patent classification and domestic or national classification.
   def classifications
-    classes = []
+    classes = Hash.new 
     
-    h510 = Hash.new
     h = Hash.new
     if b510 = @doc.at_xpath("//b510")
       # Collect the main classification
@@ -230,10 +229,8 @@ class PatentsXMLParser
         h.store(:subclass, fclasses) unless fclasses.empty?
       end
     end
-    h510.store(:domestic_classifications, h) unless h.empty?
-    classes << h510 unless h510.empty?
+    classes.store(:domestic_classifications, h) unless h.empty?
 
-    h520 = Hash.new
     h = Hash.new
     if b520 = @doc.at_xpath("//b520")
       h = Hash.new     
@@ -262,8 +259,7 @@ class PatentsXMLParser
       b527 = b520.at_xpath(".//b527")
       h.store(:country, extract_inner_text(b527)) unless b527 == nil
     end
-    h520.store(:international_classifications, h) unless h.empty?
-    classes << h520 unless h520.empty?
+    classes.store(:international_classifications, h) unless h.empty?
     
     classes
   end
@@ -478,4 +474,20 @@ class PatentsXMLParser
     description + "\n" + claims
   end
 
+  # B400 - public availability dates
+  # B472 - term of grant
+  # B474US - length of the extension
+  # TODO: further review required
+  def grant_info
+    gi = Hash.new
+    
+    if b400 = @doc.at_xpath("//400")
+      if b472 = b400.at_xpath(".//b472")
+        b474us = b472.at_xpath(".//b474us")
+         gi.store(:length, extract_inner_text(b474us)) unless b474us == nil
+      end
+    end
+    
+    gi
+  end
 end
