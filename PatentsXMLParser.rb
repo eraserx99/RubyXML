@@ -52,8 +52,85 @@ class PatentsXMLParser
   end
   private :extract_inner_text
   
-  def doc_id
+    # Utility function to extract %NAM
+  def extract_nam(node)
+    results = []
     
+    h = Hash.new
+    # Look for elements (such as fnm, snm, etc) relative to the current element
+    # Elements within <NAM>...</NAM> 
+    # fnm => Given and Middle Name(s) and/or Initials
+    first_name = node.at_xpath(".//nam/fnm")
+    # snm => Family name , last, surname or, if unable to distinguish: whole personal or organization name
+    last_name = node.at_xpath(".//nam/snm")
+    # suffix => Suffix (e.g., II, Jr., Sr., Esq., et al.)
+    suffix = node.at_xpath(".//nam/sfx")
+    # onm => Organization name
+    organization = node.at_xpath(".//nam/onm")
+    # odv => Division of Organization
+    division = node.at_xpath(".//nam/odv")
+    h.store(:first_name, extract_inner_text(first_name)) unless first_name == nil
+    h.store(:last_name, extract_inner_text(last_name)) unless last_name == nil
+    h.store(:suffix, extract_inner_text(suffix)) unless suffix == nil
+    h.store(:organization, extract_inner_text(organization)) unless organization == nil
+    h.store(:division, extract_inner_text(division)) unless division == nil
+    results << h unless h.empty?
+
+    results
+  end
+  private :extract_nam
+  
+  # Utility function to extract %PARTY
+  def extract_party(node_set)
+    results = []
+
+    node_set.each do |node|
+      h = Hash.new
+      # Look for elements (such as fnm, snm, etc) relative to the current element
+      # Elements within <PARTY-XX>...</PARTY-XX> 
+      # nctry => Country of Nationality
+      residence = node.at_xpath(".//nctry")
+      # rctry => Country of Residence 
+      nationality = node.at_xpath(".//rctry")
+      # Elements within <PARTY-XX><NAM>...</NAM></PARTY-XX> 
+      # fnm => Given and Middle Name(s) and/or Initials
+      first_name = node.at_xpath(".//nam/fnm")
+      # snm => Family name , last, surname or, if unable to distinguish: whole personal or organization name
+      last_name = node.at_xpath(".//nam/snm")
+      # suffix => Suffix (e.g., II, Jr., Sr., Esq., et al.)
+      suffix = node.at_xpath(".//nam/sfx")
+      # onm => Organization name
+      organization = node.at_xpath(".//nam/onm")
+      # odv => Division of Organization
+      division = node.at_xpath(".//nam/odv")
+      # Elements within <PARTY-XX><ADR>...</ADR></PARTY-XX> 
+      # city => City or Town
+      city = node.at_xpath(".//adr/city")
+      # state => Region of Country (State, Province, etc.)
+      state = node.at_xpath(".//adr/state")
+      # pcode => Postal Code
+      pcode = node.at_xpath(".//adr/pcode")
+      # ctry => Country
+      country = node.at_xpath(".//adr/ctry")
+      h.store(:residence, extract_inner_text(residence)) unless residence == nil
+      h.store(:nationality, extract_inner_text(nationality)) unless nationality == nil
+      h.store(:first_name, extract_inner_text(first_name)) unless first_name == nil
+      h.store(:last_name, extract_inner_text(last_name)) unless last_name == nil
+      h.store(:suffix, extract_inner_text(suffix)) unless suffix == nil
+      h.store(:organization, extract_inner_text(organization)) unless organization == nil
+      h.store(:division, extract_inner_text(division)) unless division == nil
+      h.store(:city, extract_inner_text(city)) unless city == nil
+      h.store(:state, extract_inner_text(state)) unless state == nil
+      h.store(:pcode, extract_inner_text(pcode)) unless pcode == nil
+      h.store(:country, extract_inner_text(country)) unless country == nil
+      results << h unless h.empty?
+    end
+    
+    results    
+  end
+  private :extract_party
+  
+  def doc_id
   end
   
   def doc_type
@@ -113,21 +190,77 @@ class PatentsXMLParser
     extract_inner_text(node)
   end
   
+  # B510 - international patent classification (IPC) data
   # B511 - main classification
   # B512 - further classification
-  def pub_classes
-    classes = []
-    # Collect the main classification
-    node = @doc.at_xpath("//b511")
-    classes << extract_inner_text(node) unless node == nil
-    # Collect the further classification, if any
-    node = @doc.at_xpath("//b512")
-    classes << extract_inner_text(node) unless node == nil
-    classes
-  end
-  
+  # B520 - domestic or national classification
+  # B521 - main classification
+  # B522 - further classification
+  # B527 - country
+  # TODO: further review required; Each of the patents might have i
+  # both international patent classification and domestic or national classification.
   def classifications
+    classes = []
     
+    h510 = Hash.new
+    h = Hash.new
+    if b510 = @doc.at_xpath("//b510")
+      # Collect the main classification
+      b511 = b510.xpath(".//b511")
+      mclasses = []
+      if b511 != nil
+        b511.each do |cls|
+          mclasses << extract_inner_text(cls) 
+        end  
+        h.store(:mainclass, mclasses) unless mclasses.empty?
+      end
+      
+      # Collect the further classification, if any
+      b512 = b510.xpath(".//b512")
+      fclasses = []
+      if b512 != nil
+        b512.each do |cls|
+          fclasses << extract_inner_text(cls)
+        end  
+        h.store(:subclass, fclasses) unless fclasses.empty?
+      end
+    end
+    h510.store(:domestic_classifications, h) unless h.empty?
+    classes << h510 unless h510.empty?
+
+    h520 = Hash.new
+    h = Hash.new
+    if b520 = @doc.at_xpath("//b520")
+      h = Hash.new     
+
+      # Collect the main classification
+      b521 = b520.xpath(".//b521")
+      mclasses = []
+      if b521 != nil
+        b521.each do |cls|
+          mclasses << extract_inner_text(cls)
+        end  
+        h.store(:mainclass, mclasses) unless mclasses.empty?
+      end
+      
+      # Collect the further classification, if any
+      b522 = b520.xpath(".//b522")
+      fclasses = []
+      if b522 != nil
+        b522.each do |cls|
+          fclasses << extract_inner_text(cls)
+        end  
+        h.store(:subclass, fclasses) unless fclasses.empty?
+      end
+      
+      # Collect the country
+      b527 = b520.at_xpath(".//b527")
+      h.store(:country, extract_inner_text(b527)) unless b527 == nil
+    end
+    h520.store(:international_classifications, h) unless h.empty?
+    classes << h520 unless h520.empty?
+    
+    classes
   end
   
   def references
@@ -140,67 +273,103 @@ class PatentsXMLParser
     extract_inner_text(node)
   end
   
+  # B710 - applicant information
+  # B711 - name & address
+  # This function returns the inventor information as an array of hashes.
+  def applicants
+    results = []
+    
+    if b710 = @doc.at_xpath("//b710") 
+      b711 = b720.xpath(".//b711")
+      results = extract_party(b711)
+    end
+    
+    results
+  end
+  
   # B720 - inventor information
   # B721 - name & address
   # This function returns the inventor information as an array of hashes.
-  # [ [ 'first_name' => '...', 'last_name' => '...', ]]
-  def applicants
-    appls = []
+  def inventors
+    results = []
     
     if b720 = @doc.at_xpath("//b720") 
       b721 = b720.xpath(".//b721")
-      # Iterate through the elements
-      b721.each do |appl|
-        ap = Hash.new
-        
-        # Look for elements (such as fnm, snm, etc) relative to the current element (inventor)
-        first_name = appl.at_xpath(".//fnm")
-        last_name = appl.at_xpath(".//snm")
-        organization = appl.at_xpath("..//onm")
-        city = appl.at_xpath(".//city")
-        country = appl.at_xpath(".//ctry")
-        ap.store(:first_name, extract_inner_text(first_name)) unless first_name == nil
-        ap.store(:last_name, extract_inner_text(last_name)) unless last_name == nil
-        ap.store(:organization, extract_inner_text(organization)) unless organization == nil
-        ap.store(:city, extract_inner_text(city)) unless city == nil
-        ap.store(:country, extract_inner_text(country)) unless country == nil
-        appls << ap 
-      end
+      results = extract_party(b721)
     end
     
-    appls 
+    results
   end
 
   # B730 - assignee information
   # B731 - name & address
+  # B732US - Assignee type code (USPTO)
   # This function returns the assignee information as an array of hashes.
-  # [ [last name1; first name1], [last name2; first name 2], ...]
-  def assignee
-    assigs = []
+  def assignees
+    results = []
     
     if b730 = @doc.at_xpath("//b730") 
+      h = Hash.new
+      
       b731 = b730.xpath(".//b731")
-      # Iterate through the elements
-      b731.each do |assignee|
-        assig = Hash.new
-        
-        # Look for elements (such as fnm, snm, etc) relative to the current element (assignee)
-        first_name = assignee.at_xpath(".//fnm")
-        last_name = assignee.at_xpath(".//snm")
-        organization = assignee.at_xpath("..//onm")
-        city = assignee.at_xpath(".//city")
-        country = assignee.at_xpath(".//ctry")
-        assig.store(:type, :assignee)
-        assig.store(:first_name, extract_inner_text(first_name)) unless first_name == nil
-        assig.store(:last_name, extract_inner_text(last_name)) unless last_name == nil
-        assig.store(:org_name, extract_inner_text(organization)) unless organization == nil
-        assig.store(:city, extract_inner_text(city)) unless city == nil
-        assig.store(:country, extract_inner_text(country)) unless country == nil
-        assigs << assig
-      end
+      results = extract_party(b731)
+      b732us = b730.xpath(".//b732us")
+      assignee_role = extract_inner_text(b732us)
+      h.store(:assignee_role, assignee_role) unless assignee_role.empty?
+      results << h unless h.empty?
     end
     
-    assigs
+    results
+  end
+  
+  # B740 - attorney, agent, representative information
+  # B741 - name & address
+  # This function returns the assignee information as an array of hashes.
+  # TODO: further review needed; B740 can represent either attorneys or agents
+  def agents 
+    results = []
+    
+    if b740 = @doc.at_xpath("//b740") 
+      h = Hash.new
+      
+      b741 = b740.xpath(".//b741")
+      results = extract_party(b741)
+    end
+    
+    results
+  end 
+  
+  # B745 - persons acting upon the document 
+  # B746 - primary examiner 
+  # B747 - assistant examiner
+  # B748US - art Group/Unit (USPTO) 
+  # This function returns the assignee information as an array of hashes.
+  # TODO: further review required; dept is associated with the whole group of examiners
+  def examiners
+    results = []
+    
+    if b745 = @doc.at_xpath("//b745") 
+      h = Hash.new
+     
+      # Collect primary examiner information 
+      if b746 = b745.xpath(".//b746")
+        r = extract_party(b746)
+        h.store(:primary, r) unless r.empty?
+      end
+
+      # Collect assistant examiners information      
+      if b747 = b745.xpath(".//b747")
+        r = extract_party(b747) 
+        h.store(:assistant, r) unless r.empty? 
+      end
+      
+      b748us = b745.at_xpath(".//b748us")
+      h.store(:dept, extract_inner_text(b748us)) unless b748us == nil
+      
+      results << h unless h.empty?
+    end
+    
+    results
   end
   
   # TODO: 
@@ -239,15 +408,28 @@ class PatentsXMLParser
         text = extract_inner_text(clm)
         m.store("number", number) unless number == nil
         m.store("text", text) unless text == nil 
-        clms << m
+        clms << m unless m.empty?
       end
     end
     
     clms
   end  
   
-  # Calculate the number of claims of the patent.
+  # B577 - number of claims
+  # TODO: further review required: currently, the claims are parsed SDOCL, not B57X
   def num_claims
+    nclm = 0
+    
+    if b570 = @doc.at_xpath("//570")
+      b577 = b570.at_xpath(".//577")
+      nclm = extract_inner_text(b577).to_i unless b577 == nil
+    end
+   
+    nclm 
+  end
+  
+  # Alternative to calculate the number of claims of the patent.
+  def num_claims_alt
     nclms = 0
     node = @doc.at_xpath("//sdocl")
     
@@ -268,12 +450,18 @@ class PatentsXMLParser
     nclms
   end
   
-  # There is no exemplary claim stored in patent files based on SGML2.4 and XML2.5.
-  # Return 1 for now.
+  # B578US -  exemplary claim number (USPTO)
   def exem_claim
-    1
-  end
+    clm = 1
     
+    if b570 = @doc.at_xpath("//570")
+      b578us = b750.at_xpath(".//578us")
+      clm = extract_inner_text(b578us).to_i unless b578us == nil
+    end
+   
+    clm 
+  end
+  
   # SDOD - description  
   def description
     node = @doc.at_xpath("//sdod")
