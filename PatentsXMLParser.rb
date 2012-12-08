@@ -130,6 +130,11 @@ class PatentsXMLParser
   end
   private :extract_party
   
+  # Utility function to extract %PCIT
+  def extract_pcit
+    
+  end
+  
   def doc_id
   end
   
