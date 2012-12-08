@@ -203,7 +203,8 @@ class PatentsXMLParser
   # B522 - further classification
   # B527 - country
   # TODO: further review required; Each of the patents might have i
-  # both international patent classification and domestic or national classification.
+  # both international patent classification and domestic or national classification. There can be more
+  # than one further classification.
   def classifications
     classes = Hash.new 
     
