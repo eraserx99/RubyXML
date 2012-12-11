@@ -54,9 +54,8 @@ class PatentsXMLParser
   
     # Utility function to extract %NAM
   def extract_nam(node)
-    results = []
-    
     h = Hash.new
+    
     # Look for elements (such as fnm, snm, etc) relative to the current element
     # Elements within <NAM>...</NAM> 
     # fnm => Given and Middle Name(s) and/or Initials
@@ -74,59 +73,52 @@ class PatentsXMLParser
     h.store(:suffix, extract_inner_text(suffix)) unless suffix == nil
     h.store(:organization, extract_inner_text(organization)) unless organization == nil
     h.store(:division, extract_inner_text(division)) unless division == nil
-    results << h unless h.empty?
-
-    results
+    
+    h
   end
   private :extract_nam
   
-  # Utility function to extract %PARTY
-  def extract_party(node_set)
-    results = []
+  def extract_party(node)
+    h = Hash.new
+    # Look for elements (such as fnm, snm, etc) relative to the current element
+    # Elements within <PARTY-XX>...</PARTY-XX>
+    # nctry => Country of Nationality
+    residence = node.at_xpath(".//nctry")
+    # rctry => Country of Residence
+    nationality = node.at_xpath(".//rctry")
+    # Elements within <PARTY-XX><NAM>...</NAM></PARTY-XX>
+    # fnm => Given and Middle Name(s) and/or Initials
+    first_name = node.at_xpath(".//nam/fnm")
+    # snm => Family name , last, surname or, if unable to distinguish: whole personal or organization name
+    last_name = node.at_xpath(".//nam/snm")
+    # suffix => Suffix (e.g., II, Jr., Sr., Esq., et al.)
+    suffix = node.at_xpath(".//nam/sfx")
+    # onm => Organization name
+    organization = node.at_xpath(".//nam/onm")
+    # odv => Division of Organization
+    division = node.at_xpath(".//nam/odv")
+    # Elements within <PARTY-XX><ADR>...</ADR></PARTY-XX>
+    # city => City or Town
+    city = node.at_xpath(".//adr/city")
+    # state => Region of Country (State, Province, etc.)
+    state = node.at_xpath(".//adr/state")
+    # pcode => Postal Code
+    pcode = node.at_xpath(".//adr/pcode")
+    # ctry => Country
+    country = node.at_xpath(".//adr/ctry")
+    h.store(:residence, extract_inner_text(residence)) unless residence == nil
+    h.store(:nationality, extract_inner_text(nationality)) unless nationality == nil
+    h.store(:first_name, extract_inner_text(first_name)) unless first_name == nil
+    h.store(:last_name, extract_inner_text(last_name)) unless last_name == nil
+    h.store(:suffix, extract_inner_text(suffix)) unless suffix == nil
+    h.store(:organization, extract_inner_text(organization)) unless organization == nil
+    h.store(:division, extract_inner_text(division)) unless division == nil
+    h.store(:city, extract_inner_text(city)) unless city == nil
+    h.store(:state, extract_inner_text(state)) unless state == nil
+    h.store(:pcode, extract_inner_text(pcode)) unless pcode == nil
+    h.store(:country, extract_inner_text(country)) unless country == nil
 
-    node_set.each do |node|
-      h = Hash.new
-      # Look for elements (such as fnm, snm, etc) relative to the current element
-      # Elements within <PARTY-XX>...</PARTY-XX> 
-      # nctry => Country of Nationality
-      residence = node.at_xpath(".//nctry")
-      # rctry => Country of Residence 
-      nationality = node.at_xpath(".//rctry")
-      # Elements within <PARTY-XX><NAM>...</NAM></PARTY-XX> 
-      # fnm => Given and Middle Name(s) and/or Initials
-      first_name = node.at_xpath(".//nam/fnm")
-      # snm => Family name , last, surname or, if unable to distinguish: whole personal or organization name
-      last_name = node.at_xpath(".//nam/snm")
-      # suffix => Suffix (e.g., II, Jr., Sr., Esq., et al.)
-      suffix = node.at_xpath(".//nam/sfx")
-      # onm => Organization name
-      organization = node.at_xpath(".//nam/onm")
-      # odv => Division of Organization
-      division = node.at_xpath(".//nam/odv")
-      # Elements within <PARTY-XX><ADR>...</ADR></PARTY-XX> 
-      # city => City or Town
-      city = node.at_xpath(".//adr/city")
-      # state => Region of Country (State, Province, etc.)
-      state = node.at_xpath(".//adr/state")
-      # pcode => Postal Code
-      pcode = node.at_xpath(".//adr/pcode")
-      # ctry => Country
-      country = node.at_xpath(".//adr/ctry")
-      h.store(:residence, extract_inner_text(residence)) unless residence == nil
-      h.store(:nationality, extract_inner_text(nationality)) unless nationality == nil
-      h.store(:first_name, extract_inner_text(first_name)) unless first_name == nil
-      h.store(:last_name, extract_inner_text(last_name)) unless last_name == nil
-      h.store(:suffix, extract_inner_text(suffix)) unless suffix == nil
-      h.store(:organization, extract_inner_text(organization)) unless organization == nil
-      h.store(:division, extract_inner_text(division)) unless division == nil
-      h.store(:city, extract_inner_text(city)) unless city == nil
-      h.store(:state, extract_inner_text(state)) unless state == nil
-      h.store(:pcode, extract_inner_text(pcode)) unless pcode == nil
-      h.store(:country, extract_inner_text(country)) unless country == nil
-      results << h unless h.empty?
-    end
-    
-    results    
+    h
   end
   private :extract_party
   
@@ -166,7 +158,6 @@ class PatentsXMLParser
   
   # TODO: further review needed
   def patent_type
-    kind = kind
     kind =~ PatentsXMLParser::PATENT_KIND_REGX ? :utility : :other
   end 
   
@@ -288,8 +279,12 @@ class PatentsXMLParser
     results = []
     
     if b710 = @doc.at_xpath("//b710") 
-      b711 = b720.xpath(".//b711")
-      results = extract_party(b711)
+      if b711_ns = b720.xpath(".//b711") 
+        b711_ns.each do |b711|
+          r = extract_party(b711)
+          results << r unless r.empty?
+        end
+      end
     end
     
     results
@@ -302,8 +297,12 @@ class PatentsXMLParser
     results = []
     
     if b720 = @doc.at_xpath("//b720") 
-      b721 = b720.xpath(".//b721")
-      results = extract_party(b721)
+      if b721_ns = b720.xpath(".//b721")
+        b721_ns.each do |b721|
+          r = extract_party(b721)
+          results << r unless r.empty?
+        end
+      end
     end
     
     results
@@ -319,11 +318,17 @@ class PatentsXMLParser
     if b730 = @doc.at_xpath("//b730") 
       h = Hash.new
       
-      b731 = b730.xpath(".//b731")
-      results = extract_party(b731)
-      b732us = b730.xpath(".//b732us")
+      if b731_ns = b730.xpath(".//b731")
+        b731_ns.each do |b731|
+          r = extract_party(b731)
+          results << r unless r.empty?
+        end
+      end
+      
+      b732us = b730.at_xpath(".//b732us")
       assignee_role = extract_inner_text(b732us)
       h.store(:assignee_role, assignee_role) unless assignee_role.empty?
+      
       results << h unless h.empty?
     end
     
@@ -340,8 +345,12 @@ class PatentsXMLParser
     if b740 = @doc.at_xpath("//b740") 
       h = Hash.new
       
-      b741 = b740.xpath(".//b741")
-      results = extract_party(b741)
+      if b741_ns = b740.xpath(".//b741") 
+        b741_ns.each do |b741|
+          r = extract_party(b741) 
+          results << h unless h.empty?
+        end
+      end
     end
     
     results
@@ -358,17 +367,20 @@ class PatentsXMLParser
     
     if b745 = @doc.at_xpath("//b745") 
       h = Hash.new
-     
-      # Collect primary examiner information 
-      if b746 = b745.xpath(".//b746")
-        r = extract_party(b746)
-        h.store(:primary, r) unless r.empty?
+      
+      if b746_ns = b745.xpath(".//b746")
+        b746_ns.each do |b746| 
+          r = extract_party(b746)
+          h.store(:primary, r) unless r.empty?
+       end
       end
-
+     
       # Collect assistant examiners information      
-      if b747 = b745.xpath(".//b747")
-        r = extract_party(b747) 
-        h.store(:assistant, r) unless r.empty? 
+      if b747_ns = b745.xpath(".//b747")
+        b747_ns.each do |b747|
+          r = extract_party(b747) 
+          h.store(:assistant, r) unless r.empty? 
+        end
       end
       
       b748us = b745.at_xpath(".//b748us")
