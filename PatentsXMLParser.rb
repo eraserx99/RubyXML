@@ -202,8 +202,10 @@ class PatentsXMLParser
   # B521 - main classification
   # B522 - further classification
   # B527 - country
-  # TODO: further review required; Each of the patents might have i
-  # both international patent classification and domestic or national classification.
+  # Each of the patents might have both international patent classification and domestic or national classification.
+  # There can be more than one main classification.
+  # There can be more than one further classification.
+  # TODO: further review required
   def classifications
     classes = []
     
