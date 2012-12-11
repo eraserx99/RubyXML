@@ -207,9 +207,8 @@ class PatentsXMLParser
   # There can be more than one further classification.
   # TODO: further review required
   def classifications
-    classes = []
+    classes = Hash.new 
     
-    h510 = Hash.new
     h = Hash.new
     if b510 = @doc.at_xpath("//b510")
       # Collect the main classification
@@ -217,7 +216,8 @@ class PatentsXMLParser
       mclasses = []
       if b511 != nil
         b511.each do |cls|
-          mclasses << extract_inner_text(cls) 
+          mc = extract_inner_text(cls) 
+          mclasses << mc unless mc.empty?
         end  
         h.store(:mainclass, mclasses) unless mclasses.empty?
       end
@@ -227,15 +227,14 @@ class PatentsXMLParser
       fclasses = []
       if b512 != nil
         b512.each do |cls|
-          fclasses << extract_inner_text(cls)
+          fc = extract_inner_text(cls)
+          fclasses << fc unless fc.empty?
         end  
         h.store(:subclass, fclasses) unless fclasses.empty?
       end
     end
-    h510.store(:domestic_classifications, h) unless h.empty?
-    classes << h510 unless h510.empty?
+    classes.store(:domestic_classifications, h) unless h.empty?
 
-    h520 = Hash.new
     h = Hash.new
     if b520 = @doc.at_xpath("//b520")
       h = Hash.new     
@@ -245,7 +244,8 @@ class PatentsXMLParser
       mclasses = []
       if b521 != nil
         b521.each do |cls|
-          mclasses << extract_inner_text(cls)
+          mc = extract_inner_text(cls)
+          mclasses << mc unless mc.empty? 
         end  
         h.store(:mainclass, mclasses) unless mclasses.empty?
       end
@@ -255,17 +255,18 @@ class PatentsXMLParser
       fclasses = []
       if b522 != nil
         b522.each do |cls|
-          fclasses << extract_inner_text(cls)
+          fc = extract_inner_text(cls)
+          fclasses << fc unless fc.empty? 
         end  
         h.store(:subclass, fclasses) unless fclasses.empty?
       end
       
       # Collect the country
       b527 = b520.at_xpath(".//b527")
-      h.store(:country, extract_inner_text(b527)) unless b527 == nil
+      country = extract_inner_text(b527)
+      h.store(:country, country) unless country.empty?
     end
-    h520.store(:international_classifications, h) unless h.empty?
-    classes << h520 unless h520.empty?
+    classes.store(:international_classifications, h) unless h.empty?
     
     classes
   end
@@ -371,17 +372,13 @@ class PatentsXMLParser
       end
       
       b748us = b745.at_xpath(".//b748us")
-      h.store(:dept, extract_inner_text(b748us)) unless b748us == nil
+      dept = extract_inner_text(b748us)
+      h.store(:dept, dept) unless dept.empty? 
       
       results << h unless h.empty?
     end
     
     results
-  end
-  
-  # TODO: 
-  def grant_info
-    
   end
   
   # SDOAB - abstract
@@ -414,7 +411,7 @@ class PatentsXMLParser
         number = number.scan(/\d+/)[0].to_i unless number == nil
         text = extract_inner_text(clm)
         m.store("number", number) unless number == nil
-        m.store("text", text) unless text == nil 
+        m.store("text", text) unless text.empty?
         clms << m unless m.empty?
       end
     end
@@ -429,7 +426,8 @@ class PatentsXMLParser
     
     if b570 = @doc.at_xpath("//570")
       b577 = b570.at_xpath(".//577")
-      nclm = extract_inner_text(b577).to_i unless b577 == nil
+      nc = extract_inner_text(b577)
+      nclm = nc.to_i unless nc.empty? 
     end
    
     nclm 
@@ -463,7 +461,8 @@ class PatentsXMLParser
     
     if b570 = @doc.at_xpath("//570")
       b578us = b750.at_xpath(".//578us")
-      clm = extract_inner_text(b578us).to_i unless b578us == nil
+      exem = extract_inner_text(b578us)
+      clm = exem.to_i unless exem.empty? 
     end
    
     clm 
@@ -480,4 +479,27 @@ class PatentsXMLParser
     description + "\n" + claims
   end
 
+  # B400 - public availability dates
+  # B472 - term of grant
+  # B473US - disclaimer date
+  # B474US - length of the extension
+  # TODO: further review required
+  def grant_info
+    gi = Hash.new
+    
+    if b400 = @doc.at_xpath("//400")
+      if b472 = b400.at_xpath(".//b472")
+        b473us = b400.at_xpath(".//b473")
+        disclaimer = extract_inner_text(b473us)
+        gi.store(:disclaimer, disclaimer) unless disclaimer.empty?
+        
+        b474us = b472.at_xpath(".//b474us")
+        length = extract_inner_text(b474us)
+        gi.store(:length, length) unless length.empty? 
+      end
+      
+    end
+    
+    gi
+  end
 end
