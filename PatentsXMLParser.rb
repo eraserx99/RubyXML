@@ -19,14 +19,12 @@ class PatentsXMLParser
   
   # process_bundle parses the patent file
   def self.process_bundle(file)
-    patent_regx = PatentsXMLParser::PATENT_REGX
-
     open(file) do |f|
     # Load the contents of the patent file
     # It might need some optimization here to prevent out-of-memory issues with super large patent files.
       str = f.read
       # Scan all the matched string fragments specified by the PATENT_REGX
-      str.scan(PatentsXMLParser::PATENT_REGX) do |fragment|
+      str.scan(PATENT_REGX) do |fragment|
       # Yield the matched string
         yield $&
       end
@@ -159,7 +157,7 @@ class PatentsXMLParser
 
   # TODO: further review needed
   def patent_type
-    kind =~ PatentsXMLParser::PATENT_KIND_REGX ? :utility : :other
+    kind =~ PATENT_KIND_REGX ? :utility : :other
   end
 
   # B140 - date of publication
@@ -204,10 +202,10 @@ class PatentsXMLParser
     h = Hash.new
     if b510 = @doc.at_xpath("//b510")
       # Collect the main classification
-      b511 = b510.xpath(".//b511")
+      b511_ns = b510.xpath(".//b511")
       mclasses = []
-      if b511 != nil
-        b511.each do |cls|
+      if b511_ns != nil
+        b511_ns.each do |cls|
           mc = extract_inner_text(cls)
           mclasses << mc unless mc.empty?
         end
@@ -215,10 +213,10 @@ class PatentsXMLParser
       end
 
       # Collect the further classification, if any
-      b512 = b510.xpath(".//b512")
+      b512_ns = b510.xpath(".//b512")
       fclasses = []
-      if b512 != nil
-        b512.each do |cls|
+      if b512_ns != nil
+        b512_ns.each do |cls|
           fc = extract_inner_text(cls)
           fclasses << fc unless fc.empty?
         end
@@ -232,10 +230,10 @@ class PatentsXMLParser
       h = Hash.new
 
       # Collect the main classification
-      b521 = b520.xpath(".//b521")
+      b521_ns = b520.xpath(".//b521")
       mclasses = []
-      if b521 != nil
-        b521.each do |cls|
+      if b521_ns != nil
+        b521_ns.each do |cls|
           mc = extract_inner_text(cls)
           mclasses << mc unless mc.empty?
         end
@@ -243,10 +241,10 @@ class PatentsXMLParser
       end
 
       # Collect the further classification, if any
-      b522 = b520.xpath(".//b522")
+      b522_ns = b520.xpath(".//b522")
       fclasses = []
-      if b522 != nil
-        b522.each do |cls|
+      if b522_ns != nil
+        b522_ns.each do |cls|
           fc = extract_inner_text(cls)
           fclasses << fc unless fc.empty?
         end
@@ -502,7 +500,7 @@ class PatentsXMLParser
 
     if b400 = @doc.at_xpath("//400")
       if b472 = b400.at_xpath(".//b472")
-        b473us = b400.at_xpath(".//b473us")
+        b473us b472.at_xpath(".//b473us")
         disclaimer = extract_inner_text(b473us)
         gi.store(:disclaimer, disclaimer) unless disclaimer.empty?
 
