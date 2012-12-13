@@ -121,11 +121,6 @@ class PatentsXMLParser
   end
   private :extract_party
 
-  # Utility function to extract %PCIT
-  def extract_pcit
-
-  end
-
   def doc_id
   end
 
@@ -419,10 +414,10 @@ class PatentsXMLParser
         # The ID attribute of CLM element represents the claim number.
         # The format of the ID attribute is CLM-ddddd.
         number = clm['id']
-        number = number.scan(/\d+/)[0].to_i unless number == nil
+        number = number.scan(/\d+/)[0] unless number == nil
         text = extract_inner_text(clm)
         m.store("number", number) unless number == nil
-        m.store("text", text) unless text.empty?
+        m.store("text", text)
         clms << m unless m.empty?
       end
     end
@@ -479,9 +474,9 @@ class PatentsXMLParser
     clm
   end
 
-  # SDOD - description
+  # SDODE - description
   def description
-    node = @doc.at_xpath("//sdod")
+    node = @doc.at_xpath("//sdode")
     extract_inner_text(node)
   end
 

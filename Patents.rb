@@ -9,9 +9,9 @@ files.each do |file|
     if p.patent_type == :utility
       p "document number => " + p.doc_num
       p "patent kind => " + p.kind.to_s
-      p "publishing data => " + p.pub_date
+      p "publishing date => " + p.pub_date
       p "country => " + p.country
-      p "filing data => " + p.filing_date.to_s
+      p "filing date => " + p.filing_date.to_s
       p "patent type => " + p.patent_type.to_s
       p "classifications => " + p.classifications.to_s
       p "title => " + p.title
