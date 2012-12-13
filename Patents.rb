@@ -1,11 +1,11 @@
-require './PatentsXMLParser'
+require './GrantsParser'
 
-files = [ "./grants/xml24/grants_2001_sample.xml", "./grants/xml2/grants_2004_sample.xml" ]
+grants_files = [ "./grants/xml24/grants_2001_sample.xml", "./grants/xml2/grants_2004_sample.xml" ]
 
-files.each do |file|
+grants_files.each do |file|
   count = 0
-  PatentsXMLParser.process_bundle(file) do |fragment|
-    p = PatentsXMLParser.new(fragment) unless fragment.empty?
+  GrantsParser.process_bundle(file) do |fragment|
+    p = GrantsParser.new(fragment) unless fragment.empty?
     if p.patent_type == :utility
       p "document number => " + p.doc_num
       p "patent kind => " + p.kind.to_s

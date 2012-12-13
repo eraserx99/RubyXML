@@ -2,7 +2,7 @@ require "rubygems"
 require "bundler/setup"
 require "nokogiri"
 
-class PatentsXMLParser
+class GrantsParser
   # Each of the patent files might include more than one patents represented in the XML format (well-formed or malformed).
   # This PATENT_REGX (non-greedy) can be used to extract the patent grants from the patent grant files that conform to
   # SGML2.4 and XML2.5 format.
