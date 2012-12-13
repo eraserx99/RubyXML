@@ -31,6 +31,8 @@ class GrantsParser
     end
   end
 
+  # If the patent is constructed as Nokogiri::HTML object, all the element names are lower-cased.
+  # If the patent is constructed as Nokogiri::XML object, all the element names are kept as the original inputs.
   def initialize(str)
     @text = str
     # Parse the string as XML
@@ -121,9 +123,6 @@ class GrantsParser
   end
   private :extract_party
 
-  def doc_id
-  end
-
   def doc_type
     :us_patent_grant
   end
@@ -131,12 +130,8 @@ class GrantsParser
   # :uspto_xml_v4, , :uspto_xml_v2, :uspto_xml_v1, or :uspto_sgml_v2
   # TODO: further review needed
   def source_version
-    :uspto_xml_v2
+    :uspto_sgml_v2
   end
-
-  # The member functions below help to extract information from the patent
-  # If the patent is constructed as Nokogiri::HTML object, all the element names are lower-cased.
-  # If the patent is constructed as Nokogiri::XML object, all the element names are kept as the original inputs.
 
   # B110 - number of document
   def doc_num
