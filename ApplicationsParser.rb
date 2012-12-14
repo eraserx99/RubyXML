@@ -116,10 +116,39 @@ class ApplicationsParser
     node = @doc.at_xpath("//patent-application-publication/subdoc-bibliographic-information/technical-information/title-of-invention")
     extract_inner_text(node)        
   end
-
+  
+  # patent-application-publication/subdoc-abstract
+  # TODO: further review required; it might need to expand HTML special characters
   def abstract
+    node = @doc.at_xpath("//patent-application-publication/subdoc-abstract")
+    extract_inner_text(node)         
+  end
+  
+  # patent-application-publication/subdoc-description
+  # TODO: further review required; it might need to expand HTML special characters
+  def description
+    node = @doc.at_xpath("//patent-application-publication/subdoc-description")
+    extract_inner_text(node)       
+  end
+ 
+  # 
+  def applicants
+  end 
+  
+  # patent-application-publication/subdoc-bibliographic-information/inventors
+  def inventors
+  end
+  
+  #
+  def agents
   end
 
-  def description
+  # patent-application-publication/subdoc-bibliographic-information/assignee
+  def assignees
   end
+  
+  #
+  def examiners
+  end
+  
 end

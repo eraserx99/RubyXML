@@ -45,6 +45,8 @@ applications_files.each do |file|
     p "filing date => " + p.filing_date   
     p "series code => " + p.series_code
     p "title => " + p.title   
+    p "abstract => " + p.abstract    
+    p "description => " + p.description    
   end
 end
 
