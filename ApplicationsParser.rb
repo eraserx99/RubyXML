@@ -136,6 +136,8 @@ class ApplicationsParser
   end 
   
   # patent-application-publication/subdoc-bibliographic-information/inventors
+  # patent-application-publication/subdoc-bibliographic-information/inventors/first-named-inventor
+  # patent-application-publication/subdoc-bibliographic-information/inventors/inventor
   def inventors
   end
   
